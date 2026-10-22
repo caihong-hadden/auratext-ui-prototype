@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AuraText 管理后台</title>
+  <style>
+    :root {
+      --bg: #edf8f0;
+      --bg-deep: #dff2e5;
+      --panel: rgba(255, 255, 255, .72);
+      --panel-solid: #fff;
+      --panel-soft: rgba(255, 255, 255, .48);
+      --text: #183125;
+      --muted: #678070;
+      --line: rgba(65, 125, 83, .18);
+      --accent: #29ae62;
+      --accent-deep: #187b43;
+      --accent-soft: rgba(41, 174, 98, .13);
+      --warning: #c78a1d;
+      --danger: #d65c5c;
+      --info: #4b86b5;
+      --shadow: 0 12px 38px rgba(40, 123, 70, .12);
+      --shadow-hover: 0 18px 48px rgba(40, 123, 70, .2);
+      --radius: 16px;
+    }
+
+    body.dark {
+      --bg: #101914;
+      --bg-deep: #17271d;
+      --panel: rgba(27, 43, 32, .78);
+      --panel-solid: #1b2a20;
+      --panel-soft: rgba(255, 255, 255, .06);
+      --text: #ecf7ef;
+      --muted: #a7bcae;
+      --line: rgba(215, 242, 221, .14);
+      --accent: #64d58c;
+      --accent-deep: #8ce5aa;
+      --accent-soft: rgba(100, 213, 140, .14);
+      --warning: #e3ae4e;
+      --danger: #ed8989;
+      --info: #8dbbe0;
+      --shadow: 0 14px 42px rgba(0, 0, 0, .22);
+      --shadow-hover: 0 18px 52px rgba(0, 0, 0, .32);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, var(--bg) 0%, var(--bg-deep) 48%, var(--bg) 100%);
+      color: var(--text);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(41, 174, 98, .3); outline-offset: 2px; }
+
+    .shell { display: flex; min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 10;
+      width: 246px;
+      padding: 24px 16px 18px;
+      background: rgba(255, 255, 255, .48);
+      border-right: 1px solid var(--line);
+      backdrop-filter: blur(22px) saturate(160%);
+      -webkit-backdrop-filter: blur(22px) saturate(160%);
+    }
+    body.dark .sidebar { background: rgba(19, 31, 23, .72); }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 10px; margin-bottom: 30px; }
+    .brand-mark {
+      width: 38px; height: 38px; display: grid; place-items: center;
+      border-radius: 11px; color: #fff; font-weight: 900;
+      background: linear-gradient(135deg, #46cf7d, #187b43);
+      box-shadow: 0 5px 16px rgba(41, 174, 98, .28);
+    }
+    .brand strong { display: block; font-size: 18px; }
+    .brand small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .nav-label { padding: 0 12px 8px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+    .nav { display: grid; gap: 5px; }
+    .nav button {
+      display: flex; align-items: center; gap: 11px; width: 100%; padding: 11px 12px;
+      border: 1px solid transparent; border-radius: 11px; color: var(--muted);
+      background: transparent; text-align: left; transition: .18s ease;
+    }
+    .nav button:hover { color: var(--text); background: var(--panel-soft); transform: translateX(2px); }
+    .nav button.active { color: var(--accent-deep); background: var(--accent-soft); border-color: rgba(41, 174, 98, .18); font-weight: 700; }
+    .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+    .side-footer { position: absolute; inset: auto 16px 18px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel-soft); }
+    .side-footer p { margin: 0 0 9px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .side-footer button { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; }
+
+    .content { width: calc(100% - 246px); margin-left: 246px; padding: 24px 30px 48px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 26px; }
+    .eyebrow { margin: 0 0 5px; color: var(--accent-deep); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 7px; font-size: clamp(24px, 3vw, 34px); line-height: 1.2; }
+    .page-desc { margin: 0; color: var(--muted); font-size: 14px; }
+    .top-actions { display: flex; align-items: center; gap: 9px; }
+    .icon-btn, .user-chip {
+      display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 40px;
+      border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); box-shadow: var(--shadow);
+    }
+    .user-chip { justify-content: flex-start; gap: 9px; padding: 5px 12px 5px 6px; font-size: 13px; }
+    .avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #45cb7b, #187b43); font-size: 12px; font-weight: 800; }
+
+    .view { display: none; animation: viewIn .22s ease both; }
+    .view.active { display: block; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .stat-card, .panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .stat-card { padding: 18px; transition: .2s ease; }
+    .stat-card:hover, .panel.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 13px; }
+    .stat-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: var(--accent-deep); background: var(--accent-soft); }
+    .stat-value { margin: 13px 0 5px; font-size: 28px; font-weight: 800; }
+    .stat-foot { color: var(--muted); font-size: 12px; }
+    .up { color: var(--accent-deep); font-weight: 700; }
+    .warn { color: var(--warning); font-weight: 700; }
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .85fr); gap: 18px; }
+    .panel { padding: 20px; }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .panel-head h2 { margin-bottom: 5px; font-size: 17px; }
+    .panel-head p { margin: 0; color: var(--muted); font-size: 12px; }
+    .link-btn { padding: 0; border: 0; color: var(--accent-deep); background: transparent; font-size: 12px; font-weight: 700; }
+    .bar-chart { display: flex; align-items: end; gap: 12px; height: 190px; padding: 10px 4px 0; border-bottom: 1px solid var(--line); }
+    .bar-group { display: flex; flex: 1; height: 100%; align-items: end; justify-content: center; gap: 4px; position: relative; }
+    .bar { width: 18px; min-height: 8px; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, #54d488, #269f5b); transition: height .45s ease; }
+    .bar.secondary { background: rgba(41, 174, 98, .28); }
+    .bar-label { position: absolute; bottom: -24px; color: var(--muted); font-size: 10px; }
+    .legend { display: flex; gap: 16px; margin-top: 30px; color: var(--muted); font-size: 11px; }
+    .dot { display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: #269f5b; }
+    .dot.light { background: rgba(41, 174, 98, .28); }
+    .activity-list { display: grid; gap: 13px; }
+    .activity { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; }
+    .activity-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--accent-soft); color: var(--accent-deep); font-size: 13px; }
+    .activity strong { display: block; font-size: 12px; }
+    .activity span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .activity time { color: var(--muted); font-size: 10px; }
+
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .search, .select, .text-input { min-height: 38px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-solid); color: var(--text); }
+    .search { min-width: 240px; }
+    .search::placeholder { color: var(--muted); }
+    .primary-btn, .secondary-btn, .danger-btn { min-height: 38px; padding: 8px 13px; border-radius: 9px; font-size: 12px; font-weight: 700; transition: .18s ease; }
+    .primary-btn { border: 1px solid var(--accent); background: var(--accent); color: #fff; box-shadow: 0 5px 14px rgba(41,174,98,.22); }
+    .primary-btn:hover { background: var(--accent-deep); transform: translateY(-1px); }
+    .secondary-btn { border: 1px solid var(--line); background: var(--panel-soft); color: var(--text); }
+    .secondary-btn:hover { border-color: var(--accent); color: var(--accent-deep); }
+    .danger-btn { border: 1px solid rgba(214,92,92,.22); background: rgba(214,92,92,.09); color: var(--danger); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 13px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; font-size: 12px; }
+    th { color: var(--muted); font-size: 11px; font-weight: 700; white-space: nowrap; }
+    tbody tr:hover { background: var(--accent-soft); }
+    .user-cell { display: flex; align-items: center; gap: 9px; min-width: 155px; }
+    .mini-avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; color: #fff; background: linear-gradient(135deg, #6bdc96, #218c50); font-size: 11px; font-weight: 800; }
+    .user-cell strong { display: block; font-size: 12px; }
+    .user-cell small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .badge.success { background: rgba(41,174,98,.13); color: var(--accent-deep); }
+    .badge.warning { background: rgba(199,138,29,.14); color: var(--warning); }
+    .badge.danger { background: rgba(214,92,92,.13); color: var(--danger); }
+    .badge.info { background: rgba(75,134,181,.13); color: var(--info); }
+    .progress { width: 100px; height: 6px; overflow: hidden; border-radius: 99px; background: var(--line); }
+    .progress i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+    .row-actions { display: flex; gap: 6px; }
+    .row-actions button { padding: 5px 7px; border: 0; border-radius: 6px; background: var(--panel-soft); color: var(--muted); font-size: 11px; }
+    .row-actions button:hover { color: var(--accent-deep); background: var(--accent-soft); }
+    .empty { padding: 32px; color: var(--muted); text-align: center; }
+
+    .metric-list { display: grid; gap: 14px; }
+    .metric-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+    .metric-row strong { font-size: 12px; }
+    .metric-row span { color: var(--muted); font-size: 11px; }
+    .metric-track { grid-column: 1 / -1; height: 8px; overflow: hidden; border-radius: 99px; background: var(--line); }
+    .metric-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #6bdc96, #218c50); }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+    .feature-card { padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel-soft); }
+    .feature-card h3 { margin: 0 0 7px; font-size: 14px; }
+    .feature-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+    .toggle { position: relative; width: 42px; height: 23px; border: 0; border-radius: 99px; background: var(--line); transition: .2s ease; }
+    .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.18); transition: .2s ease; }
+    .toggle.on { background: var(--accent); }
+    .toggle.on::after { transform: translateX(19px); }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .setting-row:last-child { border-bottom: 0; }
+    .setting-row strong { display: block; margin-bottom: 4px; font-size: 13px; }
+    .setting-row p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .log-box { overflow: auto; max-height: 540px; padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: rgba(18, 31, 22, .9); color: #c4efd1; font: 12px/1.8 Consolas, "Courier New", monospace; }
+    .log-line { display: grid; grid-template-columns: 150px 74px 1fr; gap: 12px; white-space: nowrap; }
+    .log-line .time { color: #8ea99a; }
+    .log-line .level { color: #72df9a; }
+    .log-line .level.warn { color: #f0c56e; }
+    .log-line .level.error { color: #f28d8d; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; padding: 20px; background: rgba(14, 33, 21, .28); backdrop-filter: blur(5px); }
+    .modal-backdrop.show { display: grid; }
+    .modal { width: min(460px, 100%); padding: 23px; border: 1px solid var(--line); border-radius: 17px; background: var(--panel-solid); box-shadow: 0 22px 70px rgba(12, 44, 24, .24); }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 17px; }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .close-btn { width: 30px; height: 30px; border: 0; border-radius: 8px; background: var(--panel-soft); color: var(--muted); }
+    .modal label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .modal .text-input, .modal .select { width: 100%; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+    .toast { position: fixed; left: 50%; bottom: 24px; z-index: 60; max-width: calc(100% - 32px); padding: 11px 16px; transform: translate(-50%, 15px); border: 1px solid var(--line); border-radius: 999px; background: var(--text); color: var(--bg); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: .22s ease; font-size: 12px; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 1060px) {
+      .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 760px) {
+      .sidebar { width: 70px; padding: 17px 10px; }
+      .brand { justify-content: center; padding: 0; margin-bottom: 22px; }
+      .brand > div:last-child, .nav-label, .nav button span:not(.nav-icon), .side-footer { display: none; }
+      .nav button { justify-content: center; padding: 12px 6px; }
+      .content { width: calc(100% - 70px); margin-left: 70px; padding: 20px 15px 38px; }
+      .topbar { align-items: flex-start; }
+      .user-chip { padding-right: 6px; }
+      .user-chip > span:last-child { display: none; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .log-line { grid-template-columns: 125px 58px 1fr; gap: 8px; }
+    }
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .top-actions { gap: 5px; }
+      .search { min-width: 100%; }
+      .toolbar-left, .toolbar-right { width: 100%; }
+      .toolbar-right button, .toolbar-right select { flex: 1; }
+      h1 { font-size: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="后台导航">
+      <div class="brand">
+        <div class="brand-mark">A</div>
+        <div><strong>AuraText</strong><small>Admin Console</small></div>
+      </div>
+      <div class="nav-label">工作台</div>
+      <nav class="nav">
+        <button class="active" data-view="dashboard"><span class="nav-icon">⌂</span><span>数据总览</span></button>
+        <button data-view="users"><span class="nav-icon">♙</span><span>用户管理</span></button>
+        <button data-view="tasks"><span class="nav-icon">◫</span><span>识别任务</span></button>
+        <button data-view="history"><span class="nav-icon">◷</span><span>历史记录</span></button>
+        <button data-view="models"><span class="nav-icon">◇</span><span>模型与服务</span></button>
+        <button data-view="settings"><span class="nav-icon">⚙</span><span>系统配置</span></button>
+        <button data-view="logs"><span class="nav-icon">≡</span><span>运行日志</span></button>
+        <button data-view="about"><span class="nav-icon">ⓘ</span><span>关于系统</span></button>
+      </nav>
+      <div class="side-footer">
+        <p>系统状态正常，最近一次检查于 2 分钟前完成。</p>
+        <button id="resetDemo">重置页面状态</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="viewEyebrow">AURATEXT / ADMIN</p>
+          <h1 id="viewTitle">数据总览</h1>
+          <p class="page-desc" id="viewDesc">查看公测期间的用户、任务与服务运行概况。</p>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="themeToggle" type="button" title="切换主题" aria-label="切换主题">☾</button>
+          <button class="icon-btn" id="notifyBtn" type="button" title="查看通知" aria-label="查看通知">♧</button>
+          <button class="user-chip" id="profileBtn" type="button"><span class="avatar">A</span><span>管理员 · Demo</span></button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard" data-title="数据总览" data-desc="查看公测期间的用户、任务与服务运行概况。">
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-top"><span>注册用户</span><span class="stat-icon">♙</span></div><div class="stat-value" data-stat="users">128</div><div class="stat-foot"><span class="up">↑ 12.6%</span> 较上周</div></article>
+          <article class="stat-card"><div class="stat-top"><span>本月识别任务</span><span class="stat-icon">◫</span></div><div class="stat-value" data-stat="tasks">846</div><div class="stat-foot"><span class="up">↑ 8.4%</span> 较上月</div></article>
+          <article class="stat-card"><div class="stat-top"><span>服务可用率</span><span class="stat-icon">✓</span></div><div class="stat-value">99.82%</div><div class="stat-foot"><span class="up">运行稳定</span> 最近 30 天</div></article>
+          <article class="stat-card"><div class="stat-top"><span>媒体存储</span><span class="stat-icon">▣</span></div><div class="stat-value">6.8 GB</div><div class="stat-foot"><span class="warn">34%</span> / 20 GB 配额</div></article>
+        </div>
+        <div class="grid-2">
+          <article class="panel lift"><div class="panel-head"><div><h2>识别趋势</h2><p>最近 7 天完成任务数量</p></div><button class="link-btn" data-toast="趋势数据已刷新">刷新数据</button></div><div class="bar-chart"><div class="bar-group"><i class="bar" style="height:48%"></i><i class="bar secondary" style="height:35%"></i><span class="bar-label">周一</span></div><div class="bar-group"><i class="bar" style="height:60%"></i><i class="bar secondary" style="height:43%"></i><span class="bar-label">周二</span></div><div class="bar-group"><i class="bar" style="height:72%"></i><i class="bar secondary" style="height:58%"></i><span class="bar-label">周三</span></div><div class="bar-group"><i class="bar" style="height:53%"></i><i class="bar secondary" style="height:45%"></i><span class="bar-label">周四</span></div><div class="bar-group"><i class="bar" style="height:84%"></i><i class="bar secondary" style="height:64%"></i><span class="bar-label">周五</span></div><div class="bar-group"><i class="bar" style="height:93%"></i><i class="bar secondary" style="height:70%"></i><span class="bar-label">周六</span></div><div class="bar-group"><i class="bar" style="height:68%"></i><i class="bar secondary" style="height:50%"></i><span class="bar-label">周日</span></div></div><div class="legend"><span><i class="dot"></i>云端识别</span><span><i class="dot light"></i>本地识别</span></div></article>
+          <article class="panel"><div class="panel-head"><div><h2>实时动态</h2><p>最近发生的管理事件</p></div></div><div class="activity-list"><div class="activity"><div class="activity-icon">+</div><div><strong>新用户注册</strong><span>demo_user_07 已加入公测</span></div><time>2 分钟前</time></div><div class="activity"><div class="activity-icon">✓</div><div><strong>识别任务完成</strong><span>sparkle.mp3 · Groq Whisper</span></div><time>8 分钟前</time></div><div class="activity"><div class="activity-icon">↻</div><div><strong>服务配置更新</strong><span>默认云端模型已确认</span></div><time>23 分钟前</time></div><div class="activity"><div class="activity-icon">!</div><div><strong>任务排队提醒</strong><span>高峰时段队列达到 3 个</span></div><time>1 小时前</time></div></div></article>
+        </div>
+        <article class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>服务健康度</h2><p>当前服务状态概览</p></div><span class="badge success">全部正常</span></div><div class="feature-grid"><div class="feature-card"><h3>Groq Whisper</h3><p><span class="badge success">已连接</span><br>默认云端识别模型，支持词级时间戳。</p></div><div class="feature-card"><h3>本地 FunASR</h3><p><span class="badge success">运行中</span><br>ARM64 本地识别引擎，适合离线任务。</p></div><div class="feature-card"><h3>历史媒体服务</h3><p><span class="badge success">正常</span><br>媒体文件和歌词结果可持续保存。</p></div></div></article>
+      </section>
+
+      <section class="view" id="view-users" data-title="用户管理" data-desc="管理公测用户、配额、角色与访问状态。">
+        <div class="toolbar"><div class="toolbar-left"><input class="search" id="userSearch" placeholder="搜索用户 ID 或备注" aria-label="搜索用户"></div><div class="toolbar-right"><select class="select" id="userStatus"><option value="all">全部状态</option><option value="active">正常</option><option value="pending">待审核</option><option value="paused">已暂停</option></select><button class="primary-btn" id="addUserBtn">＋ 添加用户</button></div></div>
+        <article class="panel"><div class="panel-head"><div><h2>公测用户</h2><p>共 <strong id="userCount">128</strong> 位用户</p></div><span class="badge info">在线用户</span></div><div class="table-wrap"><table><thead><tr><th>用户</th><th>角色</th><th>状态</th><th>本月任务</th><th>加入时间</th><th>操作</th></tr></thead><tbody id="userTable"><tr data-status="active"><td><div class="user-cell"><span class="mini-avatar">DL</span><div><strong>demo_lemon</strong><small>音乐爱好者</small></div></div></td><td><span class="badge info">普通用户</span></td><td><span class="badge success">正常</span></td><td><div class="progress"><i style="width:32%"></i></div><small>8 / 25</small></td><td>2026-07-18</td><td><div class="row-actions"><button data-toast="已打开用户详情">详情</button><button data-toast="用户编辑面板已打开">编辑</button></div></td></tr><tr data-status="active"><td><div class="user-cell"><span class="mini-avatar">NY</span><div><strong>night_yuki</strong><small>日语歌曲测试</small></div></div></td><td><span class="badge info">普通用户</span></td><td><span class="badge success">正常</span></td><td><div class="progress"><i style="width:68%"></i></div><small>17 / 25</small></td><td>2026-07-16</td><td><div class="row-actions"><button data-toast="已打开用户详情">详情</button><button data-toast="用户编辑面板已打开">编辑</button></div></td></tr><tr data-status="pending"><td><div class="user-cell"><span class="mini-avatar">SY</span><div><strong>sound_yard</strong><small>等待邀请码确认</small></div></div></td><td><span class="badge info">普通用户</span></td><td><span class="badge warning">待审核</span></td><td><div class="progress"><i style="width:0%"></i></div><small>0 / 10</small></td><td>2026-07-18</td><td><div class="row-actions"><button data-toast="已通过审核">通过</button><button data-toast="已拒绝申请">拒绝</button></div></td></tr><tr data-status="paused"><td><div class="user-cell"><span class="mini-avatar">MO</span><div><strong>mono_room</strong><small>超过月度配额</small></div></div></td><td><span class="badge info">普通用户</span></td><td><span class="badge danger">已暂停</span></td><td><div class="progress"><i style="width:100%"></i></div><small>25 / 25</small></td><td>2026-07-09</td><td><div class="row-actions"><button data-toast="已恢复用户">恢复</button><button data-toast="查看风险记录">日志</button></div></td></tr></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="view-tasks" data-title="识别任务" data-desc="查看任务队列、识别引擎、耗时与执行结果。">
+        <div class="toolbar"><div class="toolbar-left"><select class="select" id="taskFilter"><option value="all">全部任务</option><option value="running">处理中</option><option value="completed">已完成</option><option value="failed">失败</option></select><select class="select"><option>最近 24 小时</option><option>最近 7 天</option><option>本月</option></select></div><div class="toolbar-right"><button class="secondary-btn" data-toast="任务列表已刷新">↻ 刷新队列</button><button class="primary-btn" data-toast="批量操作面板已打开">批量操作</button></div></div>
+        <article class="panel"><div class="panel-head"><div><h2>任务队列</h2><p>实时展示音频和视频识别任务</p></div><span class="badge success">队列空闲</span></div><div class="table-wrap"><table><thead><tr><th>任务 ID</th><th>文件</th><th>引擎</th><th>状态</th><th>耗时</th><th>提交用户</th><th>操作</th></tr></thead><tbody id="taskTable"><tr data-task-status="completed"><td><code>f8d84ed9</code></td><td><strong>スパークル.mp3</strong><small>12.4 MB</small></td><td>Groq Whisper</td><td><span class="badge success">已完成</span></td><td>2m 18s</td><td>night_yuki</td><td><button class="secondary-btn" data-toast="任务详情已打开">查看</button></td></tr><tr data-task-status="running"><td><code>bc31ac72</code></td><td><strong>demo_voice.wav</strong><small>8.1 MB</small></td><td>FunASR</td><td><span class="badge info">处理中 64%</span></td><td>1m 06s</td><td>demo_lemon</td><td><button class="secondary-btn" data-toast="已请求取消任务">取消</button></td></tr><tr data-task-status="completed"><td><code>602ac1ef</code></td><td><strong>meeting_clip.mp4</strong><small>34.7 MB</small></td><td>Groq Whisper</td><td><span class="badge success">已完成</span></td><td>4m 42s</td><td>sound_yard</td><td><button class="secondary-btn" data-toast="任务详情已打开">查看</button></td></tr><tr data-task-status="failed"><td><code>1a9d8e40</code></td><td><strong>unknown.m4a</strong><small>2.2 MB</small></td><td>Groq Whisper</td><td><span class="badge danger">失败</span></td><td>—</td><td>mono_room</td><td><button class="secondary-btn" data-toast="已打开失败原因">诊断</button></td></tr></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="view-history" data-title="历史记录" data-desc="查看用户保存的歌词、媒体与翻译结果。">
+        <div class="toolbar"><div class="toolbar-left"><input class="search" placeholder="搜索文件名或用户" aria-label="搜索历史记录"><select class="select"><option>全部语言</option><option>中文</option><option>日语</option><option>英语</option></select></div><div class="toolbar-right"><button class="secondary-btn" data-toast="导出报告已生成">↓ 导出报告</button><button class="danger-btn" data-toast="已清理过期记录">清理过期记录</button></div></div>
+        <article class="panel"><div class="panel-head"><div><h2>媒体与歌词记录</h2><p>展示识别结果、翻译状态和媒体存储情况</p></div><span class="badge info">共 2,486 条</span></div><div class="table-wrap"><table><thead><tr><th>文件名</th><th>语言</th><th>识别模式</th><th>翻译</th><th>时长</th><th>创建时间</th><th>操作</th></tr></thead><tbody><tr><td><strong>スパークル (Movie ver.)</strong><small>RADWIMPS.mp3</small></td><td>日语</td><td><span class="badge info">云端</span></td><td><span class="badge success">已完成</span></td><td>8:54</td><td>刚刚</td><td><button class="secondary-btn" data-toast="已打开歌词预览">预览</button></td></tr><tr><td><strong>city_pop_demo.wav</strong></td><td>英语</td><td><span class="badge info">云端</span></td><td><span class="badge warning">待翻译</span></td><td>3:26</td><td>今天 17:42</td><td><button class="secondary-btn" data-toast="已加入翻译队列">翻译</button></td></tr><tr><td><strong>访谈片段.mp4</strong></td><td>中文</td><td><span class="badge success">本地</span></td><td>无需翻译</td><td>12:08</td><td>今天 15:10</td><td><button class="secondary-btn" data-toast="已打开字幕预览">预览</button></td></tr></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="view-models" data-title="模型与服务" data-desc="配置识别模型、翻译服务和媒体处理能力。">
+        <div class="grid-2"><article class="panel"><div class="panel-head"><div><h2>识别引擎</h2><p>公测环境的模型服务状态</p></div><span class="badge success">3 / 3 正常</span></div><div class="setting-row"><div><strong>Groq Whisper large-v3</strong><p>默认云端模型 · 词级时间戳 · 高精度</p></div><span class="badge success">默认</span></div><div class="setting-row"><div><strong>FunASR Paraformer-zh</strong><p>本地 ARM64 引擎 · 中文优化 · 离线可用</p></div><span class="badge success">可用</span></div><div class="setting-row"><div><strong>faster-whisper tiny</strong><p>备用本地引擎 · 低内存模式</p></div><span class="badge warning">备用</span></div></article><article class="panel"><div class="panel-head"><div><h2>翻译服务</h2><p>非中文歌词的自动翻译能力</p></div><span class="badge success">已配置</span></div><div class="metric-list"><div class="metric-row"><strong>翻译成功率</strong><span>96.4%</span><div class="metric-track"><i style="width:96.4%"></i></div></div><div class="metric-row"><strong>平均响应时间</strong><span>4.8s</span><div class="metric-track"><i style="width:48%"></i></div></div><div class="metric-row"><strong>本月调用额度</strong><span>38%</span><div class="metric-track"><i style="width:38%"></i></div></div></div></article></div>
+        <article class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>能力开关</h2><p>管理识别和媒体处理能力</p></div></div><div class="feature-grid"><div class="feature-card"><h3>逐词高亮</h3><p>显示逐词时间戳和播放中的高亮状态。</p><button class="toggle on" data-toggle data-toast="逐词高亮已开启" aria-label="逐词高亮"></button></div><div class="feature-card"><h3>日文假名显示</h3><p>支持日语歌词的假名/读音辅助展示。</p><button class="toggle on" data-toggle data-toast="假名显示状态已切换" aria-label="日文假名"></button></div><div class="feature-card"><h3>历史媒体保存</h3><p>保存原始媒体，方便从历史记录继续播放。</p><button class="toggle on" data-toggle data-toast="历史媒体保存状态已切换" aria-label="历史媒体保存"></button></div></div></article>
+      </section>
+
+      <section class="view" id="view-settings" data-title="系统配置" data-desc="管理访问策略、任务限制和通知偏好。">
+        <div class="grid-2"><article class="panel"><div class="panel-head"><div><h2>访问与安全</h2><p>公测阶段的访问控制策略</p></div><span class="badge info">安全策略</span></div><div class="setting-row"><div><strong>仅允许受邀用户</strong><p>没有专属 ID 的用户无法访问主应用。</p></div><button class="toggle on" data-toggle data-toast="受邀用户模式已切换"></button></div><div class="setting-row"><div><strong>登录频率限制</strong><p>同一来源每分钟最多尝试 5 次。</p></div><button class="toggle on" data-toggle data-toast="登录频率限制已切换"></button></div><div class="setting-row"><div><strong>异常操作通知</strong><p>识别失败率升高时通知管理员。</p></div><button class="toggle on" data-toggle data-toast="异常通知已切换"></button></div></article><article class="panel"><div class="panel-head"><div><h2>任务限制</h2><p>当前公测默认配额</p></div></div><label>单用户最大上传大小</label><input class="text-input" style="width:100%;margin-bottom:12px" value="100 MB" readonly><label>单用户每月任务数</label><input class="text-input" style="width:100%;margin-bottom:12px" value="25 次" readonly><label>同时运行任务数</label><input class="text-input" style="width:100%" value="1 个" readonly></article></div>
+        <article class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>通知偏好</h2><p>管理员通知渠道配置</p></div></div><div class="setting-row"><div><strong>任务完成通知</strong><p>识别任务完成后发送站内提醒。</p></div><button class="toggle on" data-toggle data-toast="任务通知已切换"></button></div><div class="setting-row"><div><strong>每日运行摘要</strong><p>每天 09:00 汇总前一天使用数据。</p></div><button class="toggle" data-toggle data-toast="每日摘要已切换"></button></div></article>
+      </section>
+
+      <section class="view" id="view-logs" data-title="运行日志" data-desc="查看识别服务、登录和媒体处理事件。">
+        <div class="toolbar"><div class="toolbar-left"><select class="select"><option>全部级别</option><option>INFO</option><option>WARN</option><option>ERROR</option></select><select class="select"><option>全部服务</option><option>API</option><option>Worker</option><option>Auth</option></select></div><div class="toolbar-right"><button class="secondary-btn" data-toast="日志已刷新">↻ 刷新</button><button class="secondary-btn" data-toast="日志下载已准备">↓ 下载日志</button></div></div><article class="panel"><div class="panel-head"><div><h2>系统事件</h2><p>最近 30 条关键日志，当前仅显示脱敏日志</p></div><span class="badge success">运行中</span></div><div class="log-box"><div class="log-line"><span class="time">2026-07-18 18:04:32</span><span class="level">INFO</span><span>worker task=f8d84ed9 transcription completed in 138s</span></div><div class="log-line"><span class="time">2026-07-18 18:03:51</span><span class="level">INFO</span><span>media filename=sparkle.mp3 stored successfully</span></div><div class="log-line"><span class="time">2026-07-18 17:58:14</span><span class="level">INFO</span><span>auth user=demo_lemon login accepted</span></div><div class="log-line"><span class="time">2026-07-18 17:54:06</span><span class="level warn">WARN</span><span>queue depth reached 3, task=bc31ac72 waiting</span></div><div class="log-line"><span class="time">2026-07-18 17:42:28</span><span class="level">INFO</span><span>translation service response received latency=4.8s</span></div><div class="log-line"><span class="time">2026-07-18 17:19:03</span><span class="level error">ERROR</span><span>media probe failed filename=unknown.m4a retry=1</span></div><div class="log-line"><span class="time">2026-07-18 16:58:47</span><span class="level">INFO</span><span>cleanup removed 12 expired temporary files</span></div><div class="log-line"><span class="time">2026-07-18 16:40:11</span><span class="level">INFO</span><span>service health check passed engines=3</span></div></div></article></section>
+      <section class="view" id="view-about" data-title="关于系统" data-desc="查看 AuraText 管理后台的版本和使用说明。">
+        <div class="grid-2">
+          <article class="panel">
+            <div class="panel-head"><div><h2>AuraText Admin Console</h2><p>管理后台界面说明</p></div><span class="badge info">UI Preview</span></div>
+            <div class="feature-grid">
+              <div class="feature-card"><h3>产品定位</h3><p>用于管理用户、识别任务、歌词历史、模型服务和运行状态。</p></div>
+              <div class="feature-card"><h3>交互范围</h3><p>支持侧栏导航、数据筛选、主题切换、状态开关和表单弹窗。</p></div>
+              <div class="feature-card"><h3>当前版本</h3><p>版本 0.9.0 · AuraText 公测管理界面。</p></div>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><h2>页面说明</h2><p>请在此处查看本页面的使用边界</p></div></div>
+            <div class="setting-row"><div><strong>页面性质</strong><p>本页面为独立制作的界面展示版本，不连接 AuraText 真实后端。</p></div></div>
+            <div class="setting-row"><div><strong>数据来源</strong><p>页面中的用户、任务、日志、统计数字均为样例数据。</p></div></div>
+            <div class="setting-row"><div><strong>操作范围</strong><p>添加用户、切换开关、筛选和刷新提示只在当前页面内模拟。</p></div></div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="userModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <form class="modal" id="userForm">
+      <div class="modal-head"><h2 id="modalTitle">添加用户</h2><button class="close-btn" type="button" id="closeModal" aria-label="关闭">×</button></div>
+      <label for="newUserId">用户 ID</label><input class="text-input" id="newUserId" placeholder="例如 demo_user_08" required>
+      <label for="newUserNote">备注</label><input class="text-input" id="newUserNote" placeholder="例如：音乐爱好者">
+      <label for="newUserQuota">每月任务配额</label><select class="select" id="newUserQuota"><option>10 次</option><option selected>25 次</option><option>50 次</option></select>
+      <div class="modal-actions"><button class="secondary-btn" type="button" id="cancelModal">取消</button><button class="primary-btn" type="submit">创建用户</button></div>
+    </form>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const title = document.getElementById('viewTitle');
+      const desc = document.getElementById('viewDesc');
+      const navButtons = [...document.querySelectorAll('.nav button')];
+      const views = [...document.querySelectorAll('.view')];
+      const toast = document.getElementById('toast');
+      let toastTimer;
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+      }
+
+      function switchView(viewName) {
+        const view = document.getElementById('view-' + viewName) || document.getElementById('view-dashboard');
+        navButtons.forEach(button => button.classList.toggle('active', button.dataset.view === view.id.replace('view-', '')));
+        views.forEach(item => item.classList.toggle('active', item === view));
+        title.textContent = view.dataset.title;
+        desc.textContent = view.dataset.desc;
+        history.replaceState(null, '', '#' + view.id.replace('view-', ''));
+      }
+
+      navButtons.forEach(button => button.addEventListener('click', () => switchView(button.dataset.view)));
+      const initialView = location.hash.slice(1);
+      if (initialView) switchView(initialView);
+
+      document.addEventListener('click', event => {
+        const action = event.target.closest('[data-toast]');
+        if (action) showToast(action.dataset.toast);
+      });
+
+      document.getElementById('themeToggle').addEventListener('click', event => {
+        document.body.classList.toggle('dark');
+        event.currentTarget.textContent = document.body.classList.contains('dark') ? '☀' : '☾';
+        showToast('主题已切换（仅当前页面有效）');
+      });
+      document.getElementById('notifyBtn').addEventListener('click', () => showToast('当前有 2 条新通知'));
+      document.getElementById('profileBtn').addEventListener('click', () => showToast('管理员资料面板已打开'));
+
+      document.querySelectorAll('[data-toggle]').forEach(toggle => toggle.addEventListener('click', () => {
+        toggle.classList.toggle('on');
+      }));
+
+      const userSearch = document.getElementById('userSearch');
+      const userStatus = document.getElementById('userStatus');
+      function filterUsers() {
+        const term = userSearch.value.trim().toLowerCase();
+        const status = userStatus.value;
+        document.querySelectorAll('#userTable tr').forEach(row => {
+          const matchTerm = row.textContent.toLowerCase().includes(term);
+          const matchStatus = status === 'all' || row.dataset.status === status;
+          row.style.display = matchTerm && matchStatus ? '' : 'none';
+        });
+      }
+      userSearch.addEventListener('input', filterUsers);
+      userStatus.addEventListener('change', filterUsers);
+
+      document.getElementById('taskFilter').addEventListener('change', event => {
+        const value = event.target.value;
+        document.querySelectorAll('#taskTable tr').forEach(row => row.style.display = value === 'all' || row.dataset.taskStatus === value ? '' : 'none');
+      });
+
+      const modal = document.getElementById('userModal');
+      const closeModal = () => modal.classList.remove('show');
+      document.getElementById('addUserBtn').addEventListener('click', () => modal.classList.add('show'));
+      document.getElementById('closeModal').addEventListener('click', closeModal);
+      document.getElementById('cancelModal').addEventListener('click', closeModal);
+      modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+      document.getElementById('userForm').addEventListener('submit', event => {
+        event.preventDefault();
+        const userId = document.getElementById('newUserId').value.trim();
+        if (!userId) return;
+        const initials = userId.slice(0, 2).toUpperCase();
+        const row = document.createElement('tr');
+        row.dataset.status = 'pending';
+        row.innerHTML = `<td><div class="user-cell"><span class="mini-avatar">${initials}</span><div><strong>${userId}</strong><small>${document.getElementById('newUserNote').value.trim() || '新加入公测'}</small></div></div></td><td><span class="badge info">普通用户</span></td><td><span class="badge warning">待审核</span></td><td><div class="progress"><i style="width:0%"></i></div><small>0 / ${document.getElementById('newUserQuota').value.replace(' 次','')}</small></td><td>刚刚</td><td><div class="row-actions"><button data-toast="已通过审核">通过</button><button data-toast="已拒绝申请">拒绝</button></div></td>`;
+        document.getElementById('userTable').prepend(row);
+        document.getElementById('userCount').textContent = Number(document.getElementById('userCount').textContent) + 1;
+        event.target.reset();
+        closeModal();
+        showToast('用户已创建');
+      });
+
+      document.getElementById('resetDemo').addEventListener('click', () => {
+        document.querySelectorAll('[data-toggle]').forEach(toggle => toggle.classList.add('on'));
+        userSearch.value = '';
+        userStatus.value = 'all';
+        filterUsers();
+        showToast('页面状态已重置');
+      });
+    })();
+  </script>
+</body>
+</html>

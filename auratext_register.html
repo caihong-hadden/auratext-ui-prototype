@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuraText 用户注册</title>
+  <meta name="description" content="创建您的专属 AuraText 用户 ID — 演示页面，不会真正创建账号。" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-100: #d4f5e0;
+      --green-300: #6de09a;
+      --green-400: #3ecb72;
+      --green-500: #27ae60;
+      --green-600: #1e8a49;
+      --green-glow: rgba(62, 203, 114, 0.35);
+      --error:   #e05555;
+      --error-bg: rgba(224, 85, 85, 0.12);
+      --white-glass: rgba(255, 255, 255, 0.55);
+      --border-glass: rgba(255, 255, 255, 0.72);
+      --text-dark: #1a2e22;
+      --text-mid:  #3a5045;
+      --text-soft: #5a7265;
+      --radius: 18px;
+      --card-shadow: 0 8px 40px rgba(39, 174, 96, 0.18), 0 2px 12px rgba(39,174,96,0.10);
+      --card-shadow-hover: 0 18px 56px rgba(39, 174, 96, 0.28), 0 4px 18px rgba(39,174,96,0.16);
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background: linear-gradient(-45deg, #b8f0d0, #d6fae8, #a8e6c3, #c9f7dc, #8de0b0, #d4f5e0);
+      background-size: 400% 400%;
+      animation: gradientShift 12s ease infinite;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradientShift {
+      0%   { background-position: 0%   50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0%   50%; }
+    }
+
+    /* floating blobs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(60px);
+      opacity: 0.45;
+    }
+    body::before {
+      width: 380px; height: 380px;
+      top: -80px; left: -100px;
+      background: radial-gradient(circle, #6de09a, transparent 70%);
+      animation: blobFloat 16s ease-in-out infinite;
+    }
+    body::after {
+      width: 300px; height: 300px;
+      bottom: -60px; right: -80px;
+      background: radial-gradient(circle, #3ecb72, transparent 70%);
+      animation: blobFloat 20s ease-in-out infinite reverse;
+    }
+
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%       { transform: translate(30px, -20px) scale(1.05); }
+      66%       { transform: translate(-20px, 30px) scale(0.97); }
+    }
+
+    /* ── Card ── */
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      background: var(--white-glass);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border: 1.5px solid var(--border-glass);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 44px 40px 36px;
+      transition: transform 0.35s cubic-bezier(.23,1,.32,1),
+                  box-shadow 0.35s cubic-bezier(.23,1,.32,1);
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    /* ── Brand ── */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--green-400), var(--green-600));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px var(--green-glow);
+      flex-shrink: 0;
+    }
+
+    .brand-icon svg { width: 22px; height: 22px; }
+
+    .brand-name {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      letter-spacing: -0.02em;
+    }
+
+    .card-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-soft);
+      margin-bottom: 28px;
+      margin-top: 4px;
+      padding-left: 2px;
+    }
+
+    /* ── Form ── */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap .icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--green-400);
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 14px 11px 40px;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1.5px solid rgba(110, 210, 150, 0.45);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      outline: none;
+      transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+      font-family: inherit;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder {
+      color: #9dbdaa;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--green-400);
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 0 3.5px rgba(62, 203, 114, 0.22);
+    }
+
+    /* ── Button ── */
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      margin-top: 8px;
+      background: linear-gradient(135deg, var(--green-400) 0%, var(--green-600) 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      border: none;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, filter 0.18s;
+      box-shadow: 0 4px 18px rgba(39,174,96,0.32);
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(39,174,96,0.42);
+      filter: brightness(1.06);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      filter: brightness(0.96);
+    }
+
+    /* ── Feedback Messages ── */
+    .feedback {
+      margin-top: 14px;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: none;
+      animation: fadeSlideIn 0.3s cubic-bezier(.23,1,.32,1) both;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .feedback.error {
+      display: block;
+      background: var(--error-bg);
+      border: 1px solid rgba(224,85,85,0.30);
+      color: var(--error);
+    }
+
+    .feedback.success {
+      display: block;
+      background: rgba(62,203,114,0.13);
+      border: 1px solid rgba(62,203,114,0.35);
+      color: var(--green-600);
+    }
+
+    .feedback-icon {
+      margin-right: 6px;
+      font-size: 1rem;
+      vertical-align: -1px;
+    }
+
+    /* ── Demo notice ── */
+    .demo-notice {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      margin-top: 20px;
+      opacity: 0.78;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .card { padding: 32px 20px 28px; }
+      .brand-name { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="card" role="main" aria-label="AuraText 用户注册卡片">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 7v10l9 5 9-5V7L12 2Z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M12 2v20M3 7l9 5 9-5" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" opacity=".65"/>
+        </svg>
+      </div>
+      <span class="brand-name">AuraText</span>
+    </div>
+
+    <h1 style="font-size:1.22rem;font-weight:700;color:var(--text-dark);margin-bottom:2px;margin-top:18px;">
+      用户注册
+    </h1>
+    <p class="card-subtitle">创建您的专属用户 ID</p>
+
+    <!-- Register Form -->
+    <form id="registerForm" novalidate aria-label="注册表单">
+
+      <!-- User ID -->
+      <div class="form-group">
+        <label for="userId">用户 ID</label>
+        <div class="input-wrap">
+          <span class="icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="userId"
+            name="userId"
+            placeholder="请输入用户 ID"
+            autocomplete="username"
+            aria-required="true"
+            aria-describedby="feedback-msg"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">密码</label>
+        <div class="input-wrap">
+          <span class="icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="请设置密码"
+            autocomplete="new-password"
+            aria-required="true"
+            aria-describedby="feedback-msg"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="confirmPassword">确认密码</label>
+        <div class="input-wrap">
+          <span class="icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            placeholder="再次输入密码"
+            autocomplete="new-password"
+            aria-required="true"
+            aria-describedby="feedback-msg"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn-primary" id="submitBtn">创建账号</button>
+
+      <!-- Feedback -->
+      <div id="feedback-msg" class="feedback" role="alert" aria-live="polite"></div>
+
+    </form>
+
+
+
+  </main>
+
+  <script>
+    (function () {
+      var form     = document.getElementById('registerForm');
+      var feedback = document.getElementById('feedback-msg');
+
+      function showFeedback(type, html) {
+        // Reset animation
+        feedback.style.animation = 'none';
+        feedback.offsetHeight;   // reflow
+        feedback.style.animation = '';
+
+        feedback.className = 'feedback ' + type;
+        feedback.innerHTML = html;
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var userId   = document.getElementById('userId').value.trim();
+        var pw       = document.getElementById('password').value;
+        var cpw      = document.getElementById('confirmPassword').value;
+
+        // Required check
+        if (!userId) {
+          showFeedback('error', '<span class="feedback-icon">⚠️</span>用户 ID 不能为空。');
+          document.getElementById('userId').focus();
+          return;
+        }
+        if (!pw) {
+          showFeedback('error', '<span class="feedback-icon">⚠️</span>密码不能为空。');
+          document.getElementById('password').focus();
+          return;
+        }
+        if (!cpw) {
+          showFeedback('error', '<span class="feedback-icon">⚠️</span>请再次输入密码以确认。');
+          document.getElementById('confirmPassword').focus();
+          return;
+        }
+
+        // Password match check
+        if (pw !== cpw) {
+          showFeedback('error', '<span class="feedback-icon">⚠️</span>两次输入的密码不一致，请重新确认。');
+          document.getElementById('confirmPassword').value = '';
+          document.getElementById('confirmPassword').focus();
+          return;
+        }
+
+        // Success — purely front-end simulation, no network/storage
+        showFeedback('success', '<span class="feedback-icon">✅</span>注册成功！您的 AuraText 账号已创建。');
+      });
+    })();
+  </script>
+</body>
+</html>
